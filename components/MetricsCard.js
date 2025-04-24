@@ -1,118 +1,128 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion } from "framer-motion"
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion"
 import CountUp from "react-countup"
 import { useEffect, useState } from "react"
 
-export default function MetricsCard({ title, value, unit, progress, status, isPrimary = false }) {
-    const [prevValue, setPrevValue] = useState(value)
-    const [showPulse, setShowPulse] = useState(false)
-    
-    useEffect(() => {
-        if (value !== prevValue) {
-            setShowPulse(true)
-            const timer = setTimeout(() => setShowPulse(false), 1000)
-            setPrevValue(value)
-            return () => clearTimeout(timer)
+export default function MetricsCard({ title, value, unit, progress, status, isPrimary = false, icon }) {
+  const [prevValue, setPrevValue] = useState(value)
+  const [showPulse, setShowPulse] = useState(false)
+  const progressValue = useMotionValue(0)
+  const progressWidth = useMotionTemplate`${progressValue}%`
+
+  useEffect(() => {
+    if (value !== prevValue) {
+      setShowPulse(true)
+      const timer = setTimeout(() => setShowPulse(false), 1000)
+      setPrevValue(value)
+      return () => clearTimeout(timer)
+    }
+  }, [value, prevValue])
+
+  useEffect(() => {
+    progressValue.set(progress)
+  }, [progress, progressValue])
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "good":
+        return {
+          text: "text-status-good",
+          bg: "bg-status-good",
+          bgLight: "bg-status-good/20",
+          border: "border-status-good/30",
+          shadow: "shadow-status-good/10",
+          glow: "glow-success",
         }
-    }, [value, prevValue])
-    
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'good':
-                return {
-                    text: 'text-green-500',
-                    bg: 'bg-green-500',
-                    bgLight: 'bg-green-100 dark:bg-green-900/30',
-                    border: 'border-green-200 dark:border-green-800'
-                }
-            case 'warning':
-                return {
-                    text: 'text-yellow-500',
-                    bg: 'bg-yellow-500',
-                    bgLight: 'bg-yellow-100 dark:bg-yellow-900/30',
-                    border: 'border-yellow-200 dark:border-yellow-800'
-                }
-            case 'critical':
-                return {
-                    text: 'text-red-500',
-                    bg: 'bg-red-500',
-                    bgLight: 'bg-red-100 dark:bg-red-900/30',
-                    border: 'border-red-200 dark:border-red-800'
-                }
-            default:
-                return {
-                    text: 'text-gray-500',
-                    bg: 'bg-gray-500',
-                    bgLight: 'bg-gray-100 dark:bg-gray-800',
-                    border: 'border-gray-200 dark:border-gray-700'
-                }
+      case "warning":
+        return {
+          text: "text-status-warning",
+          bg: "bg-status-warning",
+          bgLight: "bg-status-warning/20",
+          border: "border-status-warning/30",
+          shadow: "shadow-status-warning/10",
+          glow: "glow-warning",
+        }
+      case "critical":
+        return {
+          text: "text-status-critical",
+          bg: "bg-status-critical",
+          bgLight: "bg-status-critical/20",
+          border: "border-status-critical/30",
+          shadow: "shadow-status-critical/10",
+          glow: "glow-danger",
+        }
+      default:
+        return {
+          text: "text-muted-foreground",
+          bg: "bg-muted",
+          bgLight: "bg-muted/20",
+          border: "border-muted/30",
+          shadow: "shadow-muted/10",
+          glow: "",
         }
     }
-    
-    const colors = getStatusColor(status)
+  }
 
-    return (
-        <motion.div 
-            whileHover={{ scale: isPrimary ? 1.02 : 1.01 }}
-            transition={{ type: "spring", bounce: 0.4 }}
-            className="h-full"
-        >
-            <Card className={`w-full h-full backdrop-blur-sm ${isPrimary 
-                ? "bg-gradient-to-br from-blue-50/90 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border-2 border-blue-300 dark:border-blue-700 shadow-lg" 
-                : "bg-white/80 dark:bg-gray-950/50"}`}
+  const colors = getStatusColor(status)
+
+  return (
+    <motion.div
+      whileHover={{ scale: isPrimary ? 1.02 : 1.01, y: -4 }}
+      transition={{ type: "spring", bounce: 0.4 }}
+      className="h-full"
+      layout
+    >
+      <Card className={`w-full h-full backdrop-blur-sm bg-card/60 border border-border/40 rounded-xl overflow-hidden`}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-5 px-5">
+          <CardTitle
+            className={`${isPrimary ? "text-md" : "text-sm"} font-medium flex items-center gap-2 text-indigo-200`}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className={`${colors.bgLight} ${colors.text} p-1.5 rounded-md`}
             >
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className={`${isPrimary ? "text-md" : "text-sm"} font-medium`}>
-                        {title}
-                    </CardTitle>
-                    {isPrimary && (
-                        <motion.span 
-                            className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            ML-Predicted
-                        </motion.span>
-                    )}
-                </CardHeader>
-                <CardContent>
-                    <motion.div 
-                        className={`${isPrimary ? "text-3xl" : "text-2xl"} font-bold flex items-baseline`}
-                        animate={showPulse ? { scale: [1, 1.03, 1] } : {}}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <CountUp 
-                            start={prevValue} 
-                            end={value} 
-                            duration={1} 
-                            separator="," 
-                            decimals={0}
-                        /> 
-                        <span className="ml-1">{unit}</span>
-                    </motion.div>
-                    <div className="flex items-center space-x-2 mt-4">
-                        <div className="relative w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <motion.div 
-                                className={`absolute left-0 top-0 h-full ${colors.bg}`}
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                            />
-                        </div>
-                        <motion.span 
-                            className={`text-sm font-semibold px-2 py-0.5 rounded-full ${colors.bgLight} ${colors.text} ${colors.border} border`}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.3, delay: 0.3 }}
-                        >
-                            {status.toUpperCase()}
-                        </motion.span>
-                    </div>
-                </CardContent>
-            </Card>
-        </motion.div>
-    )
+              {icon}
+            </motion.div>
+            {title}
+          </CardTitle>
+          <motion.span
+            className={`${colors.bgLight} ${colors.text} ${colors.border} text-xs font-medium px-2 py-0.5 rounded-full border`}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {status.toUpperCase()}
+          </motion.span>
+        </CardHeader>
+        <CardContent className="px-5 pb-5">
+          <motion.div
+            className={`${isPrimary ? "text-3xl" : "text-2xl"} font-bold flex items-baseline text-white`}
+            animate={showPulse ? { scale: [1, 1.03, 1] } : {}}
+            transition={{ duration: 0.5 }}
+          >
+            <CountUp start={prevValue} end={value} duration={1} separator="," decimals={0} />
+            <span className="ml-1 text-indigo-300 text-lg">{unit}</span>
+          </motion.div>
+          <div className="flex items-center space-x-2 mt-4">
+            <div className="relative w-full h-2.5 bg-indigo-900/30 rounded-full overflow-hidden">
+              <motion.div
+                className={`absolute left-0 top-0 h-full ${colors.bg} ${colors.glow}`}
+                style={{ width: progressWidth }}
+                initial={{ width: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 60,
+                  damping: 15,
+                }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
 }
